@@ -41,8 +41,9 @@ http_archive(
 
 http_archive(
    name = "rules_foreign_cc",
-   strip_prefix = "rules_foreign_cc-main",
-   url = "https://github.com/bazelbuild/rules_foreign_cc/archive/main.zip",
+   sha256 = "d8a6c747e10f745a7a3136cd5e242bde36bc1076e2169ef4560d1b4baf67ecc7",
+   strip_prefix = "rules_foreign_cc-46047ae15ccae935b756451ed09647201cf0ca4b",
+   url = "https://github.com/bazelbuild/rules_foreign_cc/archive/46047ae15ccae935b756451ed09647201cf0ca4b.zip",
 )
 
 load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
