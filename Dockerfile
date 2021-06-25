@@ -1,11 +1,7 @@
 # syntax=docker/dockerfile:1.2
 
-# DOCKER_HOST=ssh://flatbit DOCKER_BUILDKIT=1 docker build --target=hello_world_cpu -o=bin/ .
+# DOCKER_BUILDKIT=1 docker build --target=hello_world_cpu -o=bin/ .
 # GLOG_logtostderr=1 ./hello_world_cpu
-
-# DOCKER_HOST=ssh://flatbit DOCKER_BUILDKIT=1 docker build --target=iris_tracking_cpu -o=bin/ .
-
-# cat Dockerfile | DOCKER_BUILDKIT=1 docker -H ssh://flatbit build --target=libs -o=lib/ -
 
 
 FROM alpine AS mediapipe-src-builder
@@ -66,6 +62,11 @@ RUN set -ux \
  && chmod +x /bazel/installer.sh \
  && /bazel/installer.sh \
  && rm /bazel/installer.sh
+#full static
+# https://github.com/bazelbuild/bazel/issues/8672#issuecomment-505064783
+# https://github.com/bazelbuild/bazel/issues/8672#issuecomment-507634776
+# https://blog.jessfraz.com/post/top-10-favorite-ldflags/
+#  --unresolved-symbols=ignore-all
 RUN set -ux \
  && echo ' --platform_suffix=-cpu' >/bazelflags
 COPY --from=mediapipe-src / /mediapipe/
@@ -326,16 +327,13 @@ COPY --from=base-cpu \
 ## iris_tracking
 
 FROM base-gpu AS builder-iris_tracking_gpu
-# ENV DRI_PRIME=1
 RUN \
   --mount=type=cache,target=/root/.cache/bazel \
     set -ux \
  && bazel build $(cat /bazelflags) \
                 -c opt \
                 --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
-                # --copt -DMEDIAPIPE_OMIT_EGL_WINDOW_BIT \
                 mediapipe/examples/desktop/iris_tracking:iris_tracking_gpu \
-                # -- --calculator_graph_config_file=mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt
  && cp ./bazel-bin/mediapipe/examples/desktop/iris_tracking/iris_tracking_gpu /x/
 
 FROM scratch AS iris_tracking_gpu
@@ -354,15 +352,6 @@ RUN \
 
 FROM scratch AS iris_tracking_cpu
 COPY --from=builder-iris_tracking_cpu /x/iris_tracking_cpu /
-# Graph: mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt
-# docker run --rm -it --privileged fenollp/builder-iris_tracking_cpu /x/iris_tracking_cpu --calculator_graph_config_file mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt
-
-# # https://stackoverflow.com/a/25168483/1418165
-
-# XSOCK=/tmp/.X11-unix
-# XAUTH=/tmp/.docker.xauth
-# xauth nlist :0 | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
-# docker run --rm -it -v $XSOCK:$XSOCK -v $XAUTH:$XAUTH -v /dev/input -v "$PWD":/app -e XAUTHORITY=$XAUTH  --privileged fenollp/builder-iris_tracking_cpu /x/iris_tracking_cpu --calculator_graph_config_file mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt
 
 ## hand_tracking
 
@@ -378,7 +367,6 @@ RUN \
 
 FROM scratch AS hand_tracking_cpu
 COPY --from=builder-hand_tracking_cpu /x/hand_tracking_cpu /
-# Graph: mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt
 
 FROM base-gpu AS builder-hand_tracking_gpu
 RUN \
@@ -392,4 +380,3 @@ RUN \
 
 FROM scratch AS hand_tracking_gpu
 COPY --from=builder-hand_tracking_gpu /x/hand_tracking_gpu /
-# Graph: mediapipe/graphs/hand_tracking/hand_tracking_desktop_live_gpu.pbtxt

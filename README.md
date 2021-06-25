@@ -1,6 +1,12 @@
 # gazerbeam
 Safe, seamless, AI-based Head-Coupled Perspective as a mouse driver. Open. Reproducible
 
+```
+make run.iris_tracking_gpu
+make run.hand_tracking_cpu
+# See Dockerfile for moar
+```
+
 ## wip
 * multiplatform userland mouse driver?
 	* in rust
