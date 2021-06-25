@@ -58,27 +58,50 @@ LIBS += lib/libx265.so.146
 LIBS += lib/libx264.so.152
 LIBS += lib/libvpx.so.5
 
-$(LIBS):
+$(LIBS): Dockerfile
 	$(BUILD) --target=libs -o=lib/ -
 	$(foreach so,$(LIBS),test -f $(so);) # Tests for missing SOs
+	touch lib/* # Ensure $@ is yougner than %<
+
+libs: $(LIBS)
 
 GRAPH__face_detection_cpu = mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt
 GRAPH__face_detection_gpu = mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt
 GRAPH__face_mesh_cpu = mediapipe/graphs/face_mesh/face_mesh_desktop_live.pbtxt
 GRAPH__face_mesh_gpu = mediapipe/graphs/face_mesh/face_mesh_desktop_live_gpu.pbtxt
+# GRAPH__hair_segmentation_cpu = NONE
+GRAPH__hair_segmentation_gpu = mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt
 GRAPH__hand_tracking_cpu = mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt
 GRAPH__hand_tracking_gpu = mediapipe/graphs/hand_tracking/hand_tracking_desktop_live_gpu.pbtxt
 GRAPH__holistic_tracking_cpu = mediapipe/graphs/holistic_tracking/holistic_tracking_cpu.pbtxt
 GRAPH__holistic_tracking_gpu = mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt
 GRAPH__iris_tracking_cpu = mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt
 GRAPH__iris_tracking_gpu = mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt
+GRAPH__object_detection_cpu = mediapipe/graphs/object_detection/object_detection_desktop_live.pbtxt
+# GRAPH__object_detection_gpu = NONE
+GRAPH__object_tracking_cpu = mediapipe/graphs/tracking/object_detection_tracking_desktop_live.pbtxt
+# GRAPH__object_tracking_gpu = NONE
+GRAPH__pose_tracking_cpu = mediapipe/graphs/pose_tracking/pose_tracking_cpu.pbtxt
+GRAPH__pose_tracking_gpu = mediapipe/graphs/pose_tracking/pose_tracking_gpu.pbtxt
+GRAPH__selfie_segmentation_cpu = mediapipe/graphs/selfie_segmentation/selfie_segmentation_cpu.pbtxt
+GRAPH__selfie_segmentation_gpu = mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt
+# GRAPH__objectron https://google.github.io/mediapipe/solutions/objectron.html#desktop
 
+GRAPHS = $(subst GRAPH__,,$(filter GRAPH__%,$(.VARIABLES)))
 
-.PHONY: help
 help:
-	$(foreach v, $(filter GRAPH__%,$(.VARIABLES)), $(info make run.$(subst GRAPH__,,$(v))))
+	$(foreach g, $(sort $(GRAPHS)), $(info make run.$(g)))
 
-ASSETS  = $(foreach v, $(filter GRAPH__%,$(.VARIABLES)), $($(v)))
+Dockerfile:
+	cat Dockerfile.bases >$@
+	cat Dockerfile.libs >>$@
+	$(foreach ex,$(filter %_cpu,$(GRAPHS)),cat Dockerfile.cpu | sed 's%EXAMPLE%$(subst _cpu,,$(ex))%g' >>$@;)
+	$(foreach ex,$(filter %_gpu,$(GRAPHS)),cat Dockerfile.gpu | sed 's%EXAMPLE%$(subst _gpu,,$(ex))%g' >>$@;)
+
+ASSETS  = $(foreach g, $(GRAPHS), $(GRAPH__$(g)))
+ASSETS += mediapipe/models/hair_segmentation.tflite
+ASSETS += mediapipe/models/ssdlite_object_detection.tflite
+ASSETS += mediapipe/models/ssdlite_object_detection_labelmap.txt
 ASSETS += mediapipe/modules/face_detection/face_detection_front.tflite
 ASSETS += mediapipe/modules/face_landmark/face_landmark.tflite
 ASSETS += mediapipe/modules/hand_landmark/hand_landmark.tflite
@@ -95,7 +118,7 @@ mediapipe/%.txt mediapipe/%.tflite mediapipe/%.pbtxt:
 	curl -f#SLo $@ https://raw.githubusercontent.com/$(SLUG)/$(COMMIT)/$@ || rm $@
 
 .PRECIOUS: bin/%
-bin/%:
+bin/%: Dockerfile
 	$(BUILD) --target=$* -o=bin/ -
 	test -x $@
 

@@ -1,0 +1,12 @@
+FROM base-gpu AS builder-EXAMPLE_gpu
+RUN \
+  --mount=type=cache,target=/root/.cache/bazel \
+    set -ux \
+ && bazel build $(cat /bazelflags) \
+                -c opt \
+                --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
+                mediapipe/examples/desktop/EXAMPLE:EXAMPLE_gpu \
+ && cp ./bazel-bin/mediapipe/examples/desktop/EXAMPLE/EXAMPLE_gpu /x/
+
+FROM scratch AS EXAMPLE_gpu
+COPY --from=builder-EXAMPLE_gpu /x/EXAMPLE_gpu /

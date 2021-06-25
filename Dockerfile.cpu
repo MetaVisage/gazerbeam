@@ -1,0 +1,12 @@
+FROM base-cpu AS builder-EXAMPLE_cpu
+RUN \
+  --mount=type=cache,target=/root/.cache/bazel \
+    set -ux \
+ && bazel build $(cat /bazelflags) \
+                -c opt \
+                --define MEDIAPIPE_DISABLE_GPU=1 \
+                mediapipe/examples/desktop/EXAMPLE:EXAMPLE_cpu \
+ && cp ./bazel-bin/mediapipe/examples/desktop/EXAMPLE/EXAMPLE_cpu /x/
+
+FROM scratch AS EXAMPLE_cpu
+COPY --from=builder-EXAMPLE_cpu /x/EXAMPLE_cpu /
