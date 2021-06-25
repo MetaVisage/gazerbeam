@@ -1,9 +1,12 @@
 # syntax=docker/dockerfile:1.2
 
-# DOCKER_HOST=ssh://flatbit DOCKER_BUILDKIT=1 docker build --target=hello_world_cpu -o=. -f Dockerfile.buildkit .
+# DOCKER_HOST=ssh://flatbit DOCKER_BUILDKIT=1 docker build --target=hello_world_cpu -o=bin/ .
 # GLOG_logtostderr=1 ./hello_world_cpu
 
-# DOCKER_HOST=ssh://flatbit DOCKER_BUILDKIT=1 docker build --target=iris_tracking_cpu -o=. -f Dockerfile.buildkit .
+# DOCKER_HOST=ssh://flatbit DOCKER_BUILDKIT=1 docker build --target=iris_tracking_cpu -o=bin/ .
+
+# cat Dockerfile | DOCKER_BUILDKIT=1 docker -H ssh://flatbit build --target=libs -o=lib/ -
+
 
 FROM alpine AS mediapipe-src-builder
 WORKDIR /w
@@ -105,6 +108,10 @@ RUN \
 
 FROM scratch AS hello_world_gpu
 COPY --from=base-gpu /x/hello_world_gpu /
+
+
+FROM scratch AS libs
+COPY --from=base-cpu /usr/lib/x86_64-linux-gnu/libopencv_*.so.*.*.* /
 
 
 ## iris_tracking
