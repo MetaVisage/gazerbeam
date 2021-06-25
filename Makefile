@@ -62,12 +62,21 @@ $(LIBS):
 	$(BUILD) --target=libs -o=lib/ -
 	$(foreach so,$(LIBS),test -f $(so);) # Tests for missing SOs
 
+GRAPH__face_detection_cpu = mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt
+GRAPH__face_detection_gpu = mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt
+GRAPH__face_mesh_cpu = mediapipe/graphs/face_mesh/face_mesh_desktop_live.pbtxt
+GRAPH__face_mesh_gpu = mediapipe/graphs/face_mesh/face_mesh_desktop_live_gpu.pbtxt
 GRAPH__hand_tracking_cpu = mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt
 GRAPH__hand_tracking_gpu = mediapipe/graphs/hand_tracking/hand_tracking_desktop_live_gpu.pbtxt
 GRAPH__holistic_tracking_cpu = mediapipe/graphs/holistic_tracking/holistic_tracking_cpu.pbtxt
 GRAPH__holistic_tracking_gpu = mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt
 GRAPH__iris_tracking_cpu = mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt
 GRAPH__iris_tracking_gpu = mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt
+
+
+.PHONY: help
+help:
+	$(foreach v, $(filter GRAPH__%,$(.VARIABLES)), $(info make run.$(subst GRAPH__,,$(v))))
 
 ASSETS  = $(foreach v, $(filter GRAPH__%,$(.VARIABLES)), $($(v)))
 ASSETS += mediapipe/modules/face_detection/face_detection_front.tflite
@@ -91,7 +100,7 @@ bin/%:
 	test -x $@
 
 run.%: $(ASSETS) $(LIBS) bin/%
-	LD_PRELOAD="$(PWD)/$(subst $(eval) ,:$(PWD)/,$(LIBS))" \
+	@LD_PRELOAD="$(PWD)/$(subst $(eval) ,:$(PWD)/,$(LIBS))" \
 	GLOG_logtostderr=1 \
 	  ./bin/$* \
 	    --calculator_graph_config_file=$(GRAPH__$*)

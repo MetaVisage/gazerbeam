@@ -408,3 +408,59 @@ RUN \
 
 FROM scratch AS holistic_tracking_gpu
 COPY --from=builder-holistic_tracking_gpu /x/holistic_tracking_gpu /
+
+## face_detection
+
+FROM base-cpu AS builder-face_detection_cpu
+RUN \
+  --mount=type=cache,target=/root/.cache/bazel \
+    set -ux \
+ && bazel build $(cat /bazelflags) \
+                -c opt \
+                --define MEDIAPIPE_DISABLE_GPU=1 \
+                mediapipe/examples/desktop/face_detection:face_detection_cpu \
+ && cp ./bazel-bin/mediapipe/examples/desktop/face_detection/face_detection_cpu /x/
+
+FROM scratch AS face_detection_cpu
+COPY --from=builder-face_detection_cpu /x/face_detection_cpu /
+
+FROM base-gpu AS builder-face_detection_gpu
+RUN \
+  --mount=type=cache,target=/root/.cache/bazel \
+    set -ux \
+ && bazel build $(cat /bazelflags) \
+                -c opt \
+                --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
+                mediapipe/examples/desktop/face_detection:face_detection_gpu \
+ && cp ./bazel-bin/mediapipe/examples/desktop/face_detection/face_detection_gpu /x/
+
+FROM scratch AS face_detection_gpu
+COPY --from=builder-face_detection_gpu /x/face_detection_gpu /
+
+## face_mesh
+
+FROM base-cpu AS builder-face_mesh_cpu
+RUN \
+  --mount=type=cache,target=/root/.cache/bazel \
+    set -ux \
+ && bazel build $(cat /bazelflags) \
+                -c opt \
+                --define MEDIAPIPE_DISABLE_GPU=1 \
+                mediapipe/examples/desktop/face_mesh:face_mesh_cpu \
+ && cp ./bazel-bin/mediapipe/examples/desktop/face_mesh/face_mesh_cpu /x/
+
+FROM scratch AS face_mesh_cpu
+COPY --from=builder-face_mesh_cpu /x/face_mesh_cpu /
+
+FROM base-gpu AS builder-face_mesh_gpu
+RUN \
+  --mount=type=cache,target=/root/.cache/bazel \
+    set -ux \
+ && bazel build $(cat /bazelflags) \
+                -c opt \
+                --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
+                mediapipe/examples/desktop/face_mesh:face_mesh_gpu \
+ && cp ./bazel-bin/mediapipe/examples/desktop/face_mesh/face_mesh_gpu /x/
+
+FROM scratch AS face_mesh_gpu
+COPY --from=builder-face_mesh_gpu /x/face_mesh_gpu /

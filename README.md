@@ -2,9 +2,12 @@
 Safe, seamless, AI-based Head-Coupled Perspective as a mouse driver. Open. Reproducible
 
 ```
+# Requires docker >=18.06
+
 make run.iris_tracking_gpu
 make run.hand_tracking_cpu
-# See Dockerfile for moar
+
+# `make help` for moar
 ```
 
 ## wip
