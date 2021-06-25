@@ -380,3 +380,31 @@ RUN \
 
 FROM scratch AS hand_tracking_gpu
 COPY --from=builder-hand_tracking_gpu /x/hand_tracking_gpu /
+
+## holistic_tracking
+
+FROM base-cpu AS builder-holistic_tracking_cpu
+RUN \
+  --mount=type=cache,target=/root/.cache/bazel \
+    set -ux \
+ && bazel build $(cat /bazelflags) \
+                -c opt \
+                --define MEDIAPIPE_DISABLE_GPU=1 \
+                mediapipe/examples/desktop/holistic_tracking:holistic_tracking_cpu \
+ && cp ./bazel-bin/mediapipe/examples/desktop/holistic_tracking/holistic_tracking_cpu /x/
+
+FROM scratch AS holistic_tracking_cpu
+COPY --from=builder-holistic_tracking_cpu /x/holistic_tracking_cpu /
+
+FROM base-gpu AS builder-holistic_tracking_gpu
+RUN \
+  --mount=type=cache,target=/root/.cache/bazel \
+    set -ux \
+ && bazel build $(cat /bazelflags) \
+                -c opt \
+                --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
+                mediapipe/examples/desktop/holistic_tracking:holistic_tracking_gpu \
+ && cp ./bazel-bin/mediapipe/examples/desktop/holistic_tracking/holistic_tracking_gpu /x/
+
+FROM scratch AS holistic_tracking_gpu
+COPY --from=builder-holistic_tracking_gpu /x/holistic_tracking_gpu /

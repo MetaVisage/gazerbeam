@@ -62,23 +62,23 @@ $(LIBS):
 	$(BUILD) --target=libs -o=lib/ -
 	$(foreach so,$(LIBS),test -f $(so);) # Tests for missing SOs
 
-ASSETS  = mediapipe/modules/hand_landmark/handedness.txt
-
-ASSETS += mediapipe/modules/face_detection/face_detection_front.tflite
-ASSETS += mediapipe/modules/face_landmark/face_landmark.tflite
-ASSETS += mediapipe/modules/iris_landmark/iris_landmark.tflite
-ASSETS += mediapipe/modules/palm_detection/palm_detection.tflite
-ASSETS += mediapipe/modules/hand_landmark/hand_landmark.tflite
-
-GRAPH__iris_tracking_cpu = mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt
-GRAPH__iris_tracking_gpu = mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt
 GRAPH__hand_tracking_cpu = mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt
 GRAPH__hand_tracking_gpu = mediapipe/graphs/hand_tracking/hand_tracking_desktop_live_gpu.pbtxt
+GRAPH__holistic_tracking_cpu = mediapipe/graphs/holistic_tracking/holistic_tracking_cpu.pbtxt
+GRAPH__holistic_tracking_gpu = mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt
+GRAPH__iris_tracking_cpu = mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt
+GRAPH__iris_tracking_gpu = mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt
 
-ASSETS += $(GRAPH__iris_tracking_cpu)
-ASSETS += $(GRAPH__iris_tracking_gpu)
-ASSETS += $(GRAPH__hand_tracking_cpu)
-ASSETS += $(GRAPH__hand_tracking_gpu)
+ASSETS  = $(foreach v, $(filter GRAPH__%,$(.VARIABLES)), $($(v)))
+ASSETS += mediapipe/modules/face_detection/face_detection_front.tflite
+ASSETS += mediapipe/modules/face_landmark/face_landmark.tflite
+ASSETS += mediapipe/modules/hand_landmark/hand_landmark.tflite
+ASSETS += mediapipe/modules/hand_landmark/handedness.txt
+ASSETS += mediapipe/modules/holistic_landmark/hand_recrop.tflite
+ASSETS += mediapipe/modules/iris_landmark/iris_landmark.tflite
+ASSETS += mediapipe/modules/palm_detection/palm_detection.tflite
+ASSETS += mediapipe/modules/pose_detection/pose_detection.tflite
+ASSETS += mediapipe/modules/pose_landmark/pose_landmark_full_body.tflite
 
 .PRECIOUS: $(ASSETS)
 mediapipe/%.txt mediapipe/%.tflite mediapipe/%.pbtxt:
@@ -91,6 +91,7 @@ bin/%:
 	test -x $@
 
 run.%: $(ASSETS) $(LIBS) bin/%
-	GLOG_logtostderr=1 LD_PRELOAD="$(PWD)/$(subst $(eval) ,:$(PWD)/,$(LIBS))" \
+	LD_PRELOAD="$(PWD)/$(subst $(eval) ,:$(PWD)/,$(LIBS))" \
+	GLOG_logtostderr=1 \
 	  ./bin/$* \
 	    --calculator_graph_config_file=$(GRAPH__$*)
