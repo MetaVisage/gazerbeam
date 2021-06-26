@@ -3,15 +3,15 @@
 # DOCKER_BUILDKIT=1 docker build --target=hello_world_cpu -o=bin/ .
 # GLOG_logtostderr=1 ./hello_world_cpu
 
-
 FROM --platform=$BUILDPLATFORM docker.io/library/alpine@sha256:234cb88d3020898631af0ccbbcca9a66ae7306ecd30c9720690858c1b007d2a0 AS mediapipe-src-builder
 WORKDIR /w
+ARG MEDIAPIPE_COMMIT
 RUN set -ux \
  && apk update \
  && apk add git \
  && git init \
  && git remote add origin https://github.com/google/mediapipe \
- && git fetch --depth 1 origin ecb5b5f44ab23ea620ef97a479407c699e424aa7 \
+ && git fetch --depth 1 origin $MEDIAPIPE_COMMIT \
  && git checkout FETCH_HEAD
 FROM scratch AS mediapipe-src
 COPY --from=mediapipe-src-builder /w /

@@ -1,7 +1,7 @@
 SLUG ?= google/mediapipe
-COMMIT ?= ecb5b5f44ab23ea620ef97a479407c699e424aa7
+COMMIT ?= 139237092fedef164a17840aceb4e628244f8173
 
-BUILD = cat Dockerfile | DOCKER_BUILDKIT=1 docker build
+BUILD = cat Dockerfile | DOCKER_BUILDKIT=1 docker build --build-arg MEDIAPIPE_COMMIT=$(COMMIT)
 
 
 # cat Dockerfile | DOCKER_BUILDKIT=1 docker build --target=builder-iris_tracking_cpu --tag=builder-iris_tracking_cpu -
@@ -76,7 +76,7 @@ GRAPH__hand_tracking_gpu = mediapipe/graphs/hand_tracking/hand_tracking_desktop_
 GRAPH__holistic_tracking_cpu = mediapipe/graphs/holistic_tracking/holistic_tracking_cpu.pbtxt
 GRAPH__holistic_tracking_gpu = mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt
 GRAPH__iris_tracking_cpu = mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt
-GRAPH__iris_tracking_gpu = mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt
+GRAPH__iris_tracking_gpu = mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt # Fails ; Side packet "focal_length_pixel" is required but was not provided.
 GRAPH__object_detection_cpu = mediapipe/graphs/object_detection/object_detection_desktop_live.pbtxt
 # GRAPH__object_detection_gpu = NONE
 GRAPH__object_tracking_cpu = mediapipe/graphs/tracking/object_detection_tracking_desktop_live.pbtxt
@@ -103,6 +103,7 @@ ASSETS += mediapipe/models/hair_segmentation.tflite
 ASSETS += mediapipe/models/ssdlite_object_detection.tflite
 ASSETS += mediapipe/models/ssdlite_object_detection_labelmap.txt
 ASSETS += mediapipe/modules/face_detection/face_detection_front.tflite
+ASSETS += mediapipe/modules/face_detection/face_detection_short_range.tflite
 ASSETS += mediapipe/modules/face_landmark/face_landmark.tflite
 ASSETS += mediapipe/modules/hand_landmark/hand_landmark.tflite
 ASSETS += mediapipe/modules/hand_landmark/handedness.txt
@@ -111,6 +112,7 @@ ASSETS += mediapipe/modules/iris_landmark/iris_landmark.tflite
 ASSETS += mediapipe/modules/palm_detection/palm_detection.tflite
 ASSETS += mediapipe/modules/pose_detection/pose_detection.tflite
 ASSETS += mediapipe/modules/pose_landmark/pose_landmark_full_body.tflite
+ASSETS += mediapipe/modules/selfie_segmentation/selfie_segmentation.tflite
 
 .PRECIOUS: $(ASSETS)
 mediapipe/%.txt mediapipe/%.tflite mediapipe/%.pbtxt:
@@ -127,3 +129,9 @@ run.%: $(ASSETS) $(LIBS) bin/%
 	GLOG_logtostderr=1 \
 	  ./bin/$* \
 	    --calculator_graph_config_file=$(GRAPH__$*)
+
+clean:
+	$(if $(wildcard Dockerfile), $(RM) Dockerfile)
+	$(if $(wildcard bin/*), $(RM) bin/*)
+	$(if $(wildcard lib/*), $(RM) lib/*)
+	docker system prune -a

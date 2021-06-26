@@ -19,6 +19,8 @@ make run.object_detection_cpu
 make run.object_tracking_cpu
 make run.pose_tracking_cpu
 make run.pose_tracking_gpu
+make run.selfie_segmentation_cpu
+make run.selfie_segmentation_gpu
 
 # `make help` for moar
 # Cf. https://google.github.io/mediapipe/solutions/solutions.html
